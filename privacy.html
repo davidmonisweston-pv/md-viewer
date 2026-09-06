@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy — Markdown viewer</title>
+<meta name="description" content="What this site does and does not collect. No cookies, no analytics, no accounts, and your file never leaves your browser.">
+<meta name="author" content="David Monis-Weston">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext x='16' y='23' font-family='ui-monospace,monospace' font-size='24' text-anchor='middle' fill='%233a6ea5'%3E%23%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --paper:      #f6f6f2;
+    --paper-edge: #eeeee8;
+    --ink:        #16202a;
+    --ink-soft:   #5b6773;
+    --ink-faint:  #67707c;
+    --pencil:     #3a6ea5;
+    --rule:       #dedcd2;
+
+    --serif: "Iowan Old Style", Charter, "Bitstream Charter", Constantia, "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper:      #14181d;
+      --paper-edge: #1b2027;
+      --ink:        #dfe3e6;
+      --ink-soft:   #98a3ad;
+      --ink-faint:  #7b8691;
+      --pencil:     #7fb2df;
+      --rule:       #2b323a;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    padding: 3.5rem 2rem 7rem;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 34rem; margin: 0 auto; }
+
+  a { color: var(--pencil); text-underline-offset: 0.15em; }
+  a:focus-visible { outline: 2px solid var(--pencil); outline-offset: 3px; }
+
+  .back {
+    display: inline-block;
+    margin-bottom: 3rem;
+    font-family: var(--sans);
+    font-size: 0.8125rem;
+    color: var(--ink-soft);
+  }
+
+  h1 {
+    position: relative;
+    margin: 0 0 0.6rem;
+    font-size: 2rem;
+    font-weight: 400;
+    line-height: 1.14;
+    letter-spacing: -0.015em;
+  }
+  h1::before {
+    content: "#";
+    position: absolute;
+    left: -1.35em;
+    top: 0.1em;
+    font-family: var(--mono);
+    font-size: 0.5em;
+    color: var(--pencil);
+  }
+  @media (max-width: 46rem) {
+    h1::before { position: static; display: block; margin-bottom: 0.2em; }
+  }
+
+  .updated {
+    margin: 0 0 2.75rem;
+    font-family: var(--sans);
+    font-size: 0.8125rem;
+    color: var(--ink-faint);
+  }
+
+  h2 {
+    margin: 2.75rem 0 0.7rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+
+  p { margin: 0 0 1.1rem; }
+  ul { margin: 0 0 1.1rem; padding-left: 1.3rem; }
+  li { margin: 0.35rem 0; }
+  li::marker { color: var(--ink-faint); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--paper-edge);
+    padding: 0.12em 0.34em;
+    border-radius: 2px;
+  }
+
+  .lede {
+    font-size: 1.15rem;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--rule);
+    font-family: var(--sans);
+    font-size: 0.8125rem;
+    color: var(--ink-faint);
+  }
+  footer p { margin: 0 0 0.3rem; }
+  footer a { color: var(--ink-soft); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back" href="./">Back to the viewer</a>
+
+  <h1>Privacy</h1>
+  <p class="updated">Last updated 6 September 2026</p>
+
+  <p class="lede">
+    This site does not collect anything about you, and the file you open never leaves your
+    computer. That is not a promise about intentions — it is how the page is built, and you
+    can read the source to check it.
+  </p>
+
+  <h2>Your file stays in your browser</h2>
+  <p>
+    When you choose or drop a <code>.md</code> file, the page reads it using the browser's
+    own file reader and renders it on screen. There is no upload. Nothing about the
+    document — its name, its contents, its size — is transmitted anywhere, and nothing is
+    kept once you close the tab.
+  </p>
+  <p>
+    The same is true of the PDF: it is produced by your browser's own print engine, on your
+    machine.
+  </p>
+
+  <h2>No cookies, no storage, no analytics</h2>
+  <p>
+    This site sets no cookies. It does not use local storage, session storage or any other
+    means of keeping data in your browser. There is no analytics of any kind, no tag
+    manager, no advertising, no embedded fonts or scripts from other companies, and no
+    accounts to create. Because nothing non-essential is stored on your device, there is no
+    cookie banner to click through.
+  </p>
+  <p>
+    If a document you open contains an image hosted on the internet, the viewer does
+    <strong>not</strong> load it. Fetching it would tell that image's host that you had
+    opened that document, and when. You get a placeholder you can click if you want it.
+  </p>
+
+  <h2>What the host sees</h2>
+  <p>
+    The site is served as static files by Cloudflare Pages. Like any web host, Cloudflare
+    receives and logs the technical information your browser sends in order to deliver the
+    page and protect the service against abuse: your IP address, the time of the request,
+    the page requested, and your browser's user-agent string. This is standard server
+    logging, it happens before any of my code runs, and I do not have access to a per-visitor
+    record of it.
+  </p>
+  <p>
+    Under UK GDPR that processing rests on legitimate interests — serving the site securely.
+    Cloudflare's own handling is described in their
+    <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">privacy
+    policy</a>.
+  </p>
+
+  <h2>Your rights</h2>
+  <p>
+    You have rights under UK GDPR over personal data about you, including access, correction
+    and erasure. In practice I hold no personal data about visitors to this site, so there
+    is nothing for me to retrieve or delete. If you want to raise something, please
+    <a href="https://github.com/davidmonisweston-pv/md-viewer/issues" target="_blank" rel="noopener noreferrer">open
+    an issue on GitHub</a>. You can also complain to the
+    <a href="https://ico.org.uk/" target="_blank" rel="noopener noreferrer">Information
+    Commissioner's Office</a>.
+  </p>
+
+  <h2>Who runs this</h2>
+  <p>
+    This is a personal project by David Monis-Weston. It is not a product, it is not
+    connected to my employer, and nothing is sold here. It is offered as-is, with no
+    warranty — please do not rely on it for anything critical without keeping your own copy
+    of the original file.
+  </p>
+
+  <h2>Changes</h2>
+  <p>
+    If this notice changes, the date at the top changes with it, and the history is visible
+    in the repository.
+  </p>
+
+  <footer>
+    <p>Built with
+      <a href="https://github.com/markedjs/marked" target="_blank" rel="noopener noreferrer">marked</a>
+      (MIT) and
+      <a href="https://github.com/cure53/DOMPurify" target="_blank" rel="noopener noreferrer">DOMPurify</a>
+      (Apache-2.0 / MPL-2.0), both bundled with the site.</p>
+    <p><a href="https://github.com/davidmonisweston-pv/md-viewer" target="_blank" rel="noopener noreferrer">Source on GitHub</a> — MIT licensed.</p>
+  </footer>
+
+</div>
+</body>
+</html>
