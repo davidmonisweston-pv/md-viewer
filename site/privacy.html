@@ -11,14 +11,13 @@
   :root {
     --paper:      #f6f6f2;
     --paper-edge: #eeeee8;
-    --ink:        #16202a;
-    --ink-soft:   #5b6773;
-    --ink-faint:  #67707c;
-    --pencil:     #3a6ea5;
+    --ink:        #1a201c;
+    --ink-soft:   #5a665e;
+    --ink-faint:  #646d66;
+    --pencil:     #2e5943;
     --rule:       #dedcd2;
 
     --serif: "Iowan Old Style", Charter, "Bitstream Charter", Constantia, "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
-    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
   }
 
@@ -26,10 +25,10 @@
     :root {
       --paper:      #14181d;
       --paper-edge: #1b2027;
-      --ink:        #dfe3e6;
-      --ink-soft:   #98a3ad;
-      --ink-faint:  #7b8691;
-      --pencil:     #7fb2df;
+      --ink:        #e0e4e0;
+      --ink-soft:   #9aa79e;
+      --ink-faint:  #7d8880;
+      --pencil:     #74b795;
       --rule:       #2b323a;
     }
   }
@@ -52,12 +51,14 @@
 
   a { color: var(--pencil); text-underline-offset: 0.15em; }
   a:focus-visible { outline: 2px solid var(--pencil); outline-offset: 3px; }
+  a:hover { text-decoration-thickness: 2px; }
+  a:active { color: var(--ink); }
 
   .back {
     display: inline-block;
     margin-bottom: 3rem;
-    font-family: var(--sans);
-    font-size: 0.8125rem;
+    font-family: var(--serif);
+    font-size: 0.875rem;
     color: var(--ink-soft);
   }
 
@@ -84,8 +85,8 @@
 
   .updated {
     margin: 0 0 2.75rem;
-    font-family: var(--sans);
-    font-size: 0.8125rem;
+    font-family: var(--serif);
+    font-size: 0.875rem;
     color: var(--ink-faint);
   }
 
@@ -120,8 +121,8 @@
     margin-top: 4rem;
     padding-top: 1.1rem;
     border-top: 1px solid var(--rule);
-    font-family: var(--sans);
-    font-size: 0.8125rem;
+    font-family: var(--serif);
+    font-size: 0.875rem;
     color: var(--ink-faint);
   }
   footer p { margin: 0 0 0.3rem; }
