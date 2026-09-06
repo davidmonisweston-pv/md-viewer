@@ -1,0 +1,19 @@
+#!/bin/sh
+# Refresh the installed Windows copy so the .md file association always opens
+# the current viewer. Without this the copy under %LOCALAPPDATA% silently
+# drifts behind the repository.
+#
+# Never block or fail a commit: if Windows or WSL interop is unavailable,
+# skip quietly and let the next commit pick it up.
+
+repo=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+[ -f "$repo/windows/install.ps1" ] || exit 0
+command -v powershell.exe >/dev/null 2>&1 || exit 0
+command -v wslpath >/dev/null 2>&1 || exit 0
+
+script=$(wslpath -w "$repo/windows/install.ps1" 2>/dev/null) || exit 0
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$script" -SkipRegister \
+  >/dev/null 2>&1 || true
+
+exit 0

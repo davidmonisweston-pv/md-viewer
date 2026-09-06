@@ -61,8 +61,19 @@ Windows does not allow a script to seize a file type, so make it the default you
 once: right-click any `.md` file, **Open with → Choose another app**, pick **Markdown
 viewer**, tick **Always use this app**.
 
-Re-run `install.ps1` after changing the viewer to update the installed copy. Your default
-survives it — Windows binds that choice to the ProgID, not to the path behind it.
+The installed copy refreshes itself: `windows/hooks/post-commit` re-runs the file copy on
+every commit and merge, so the association always opens the current viewer rather than
+drifting behind the repository. Install the hooks in a fresh clone with:
+
+```bash
+cp windows/hooks/post-commit .git/hooks/post-commit
+cp windows/hooks/post-commit .git/hooks/post-merge
+chmod +x .git/hooks/post-commit .git/hooks/post-merge
+```
+
+The hook never blocks a commit: if Windows or WSL interop is unavailable it skips quietly.
+Run `install.ps1` by hand any time to force a refresh. Your default survives either way —
+Windows binds that choice to the ProgID, not to the path behind it.
 
 To remove everything: run `unregister-file-association.ps1` from the installed copy, then
 delete `%LOCALAPPDATA%\md-viewer`.

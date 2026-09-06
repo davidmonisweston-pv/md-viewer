@@ -13,7 +13,12 @@
     not to the path behind it, so you do not have to pick the app again.
 #>
 param(
-    [string] $Destination = (Join-Path $env:LOCALAPPDATA 'md-viewer')
+    [string] $Destination = (Join-Path $env:LOCALAPPDATA 'md-viewer'),
+
+    # Skip the file-association step. Used by the git hook, which only needs
+    # to refresh the files: the association is already registered and does
+    # not change between commits.
+    [switch] $SkipRegister
 )
 
 $ErrorActionPreference = 'Stop'
@@ -56,6 +61,11 @@ foreach ($pair in @(@{ Root = $web;   From = 'vendor';  Filter = '*.js'  },
 $sample = Join-Path $web 'sample.md'
 if (Test-Path -LiteralPath $sample) {
     Copy-Item -LiteralPath $sample -Destination $Destination -Force
+}
+
+if ($SkipRegister) {
+    Write-Host 'Files updated; file association left as it is.'
+    return
 }
 
 Write-Host ''
