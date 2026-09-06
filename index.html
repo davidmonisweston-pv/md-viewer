@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Markdown viewer</title>
+<style>
+  :root {
+    --paper:      #f6f6f2;
+    --paper-edge: #eeeee8;
+    --ink:        #16202a;
+    --ink-soft:   #5b6773;
+    --ink-faint:  #8b94a0;
+    --pencil:     #3a6ea5;
+    --highlight:  #f0e7a6;
+    --rule:       #dedcd2;
+
+    --serif: "Iowan Old Style", Charter, "Bitstream Charter", Constantia, "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+
+    --measure: 34rem;
+    --gutter: 2rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper:      #14181d;
+      --paper-edge: #1b2027;
+      --ink:        #dfe3e6;
+      --ink-soft:   #98a3ad;
+      --ink-faint:  #6d7883;
+      --pencil:     #7fb2df;
+      --highlight:  #4a4526;
+      --rule:       #2b323a;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 1.125rem;
+    line-height: 1.7;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--pencil); text-underline-offset: 0.15em; }
+  a:focus-visible,
+  button:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid var(--pencil);
+    outline-offset: 3px;
+    border-radius: 1px;
+  }
+
+  /* ---------- chrome ---------- */
+
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: none;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.85rem var(--gutter);
+    background: color-mix(in srgb, var(--paper) 97%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--sans);
+    font-size: 0.8125rem;
+    letter-spacing: 0.005em;
+  }
+  body.has-doc .bar { display: flex; }
+
+  .bar-name {
+    font-weight: 600;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .bar-meta { color: var(--ink-faint); flex: 1; white-space: nowrap; }
+
+  .linkish {
+    appearance: none;
+    background: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: var(--pencil);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+  }
+  .linkish:hover { text-decoration-thickness: 2px; }
+
+  /* ---------- empty state ---------- */
+
+  .start {
+    min-height: 100svh;
+    display: grid;
+    place-items: center;
+    padding: 2rem var(--gutter) 4rem;
+  }
+  body.has-doc .start { display: none; }
+
+  .start-inner { max-width: 30rem; }
+
+  .start-head {
+    position: relative;
+    margin: 0 0 1.25rem;
+    font-family: var(--serif);
+    font-size: clamp(2rem, 6vw, 2.9rem);
+    font-weight: 400;
+    line-height: 1.12;
+    letter-spacing: -0.015em;
+  }
+  /* the markdown mark, hanging in the margin like a proofreader's note */
+  .start-head::before {
+    content: "#";
+    position: absolute;
+    left: -1.35em;
+    top: 0.06em;
+    font-family: var(--mono);
+    font-size: 0.5em;
+    font-weight: 400;
+    color: var(--pencil);
+  }
+  @media (max-width: 46rem) {
+    .start-head::before { position: static; display: block; margin-bottom: 0.2em; left: 0; }
+  }
+
+  .start-body {
+    margin: 0 0 2rem;
+    color: var(--ink-soft);
+    font-size: 1.0625rem;
+    line-height: 1.65;
+  }
+
+  .pick {
+    appearance: none;
+    display: inline-block;
+    padding: 0.6rem 1.4rem;
+    background: var(--ink);
+    color: var(--paper);
+    border: 0;
+    border-radius: 2px;
+    font-family: var(--sans);
+    font-size: 0.9375rem;
+    font-weight: 550;
+    letter-spacing: 0.005em;
+    cursor: pointer;
+  }
+  .pick:hover { background: var(--pencil); }
+
+  .hint {
+    margin: 0.9rem 0 0;
+    font-family: var(--sans);
+    font-size: 0.8125rem;
+    color: var(--ink-faint);
+  }
+  .hint.is-error { color: var(--pencil); }
+
+  /* ---------- drop ---------- */
+
+  .drape {
+    position: fixed;
+    inset: 0.6rem;
+    z-index: 50;
+    display: none;
+    place-items: center;
+    border: 2px dashed var(--pencil);
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--highlight) 62%, var(--paper));
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 550;
+    color: var(--ink);
+  }
+  body.dropping .drape { display: grid; }
+
+  /* ---------- reading view ---------- */
+
+  .reader {
+    display: none;
+    grid-template-columns: minmax(0, 1fr) minmax(0, var(--measure)) minmax(0, 1fr);
+    column-gap: 3rem;
+    padding: 3rem var(--gutter) 7rem;
+  }
+  body.has-doc .reader { display: grid; }
+
+  @media (max-width: 68rem) {
+    .reader { grid-template-columns: minmax(0, 1fr); column-gap: 0; }
+  }
+
+  .toc {
+    display: none;
+    grid-column: 1;
+    justify-self: end;
+    position: sticky;
+    top: 4.5rem;
+    align-self: start;
+    width: 13rem;
+    max-height: calc(100svh - 8rem);
+    overflow-y: auto;
+    font-family: var(--sans);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    border-left: 1px solid var(--rule);
+  }
+  body.has-toc .toc { display: block; }
+  @media (max-width: 68rem) {
+    body.has-toc .toc { display: none; }
+  }
+
+  .toc a {
+    display: block;
+    padding: 0.28rem 0 0.28rem 0.9rem;
+    margin-left: -1px;
+    border-left: 1px solid transparent;
+    color: var(--ink-faint);
+    text-decoration: none;
+  }
+  .toc a:hover { color: var(--ink); }
+  .toc a.sub { padding-left: 1.8rem; font-size: 0.78125rem; }
+  .toc a.current { color: var(--ink); font-weight: 600; border-left-color: var(--pencil); }
+
+  .doc {
+    grid-column: 2;
+    width: 100%;
+    min-width: 0;
+  }
+
+  @media (max-width: 68rem) {
+    .doc { grid-column: 1; justify-self: center; max-width: var(--measure); }
+  }
+
+  /* ---------- rendered markdown ---------- */
+
+  .doc > :first-child { margin-top: 0; }
+
+  .doc h1, .doc h2, .doc h3, .doc h4, .doc h5, .doc h6 {
+    font-family: var(--serif);
+    font-weight: 600;
+    line-height: 1.22;
+    letter-spacing: -0.012em;
+    scroll-margin-top: 5rem;
+  }
+  .doc h1 { font-size: 2.1rem; margin: 0 0 1.4rem; font-weight: 400; letter-spacing: -0.02em; }
+  .doc h2 { font-size: 1.45rem; margin: 2.75rem 0 0.85rem; }
+  .doc h3 { font-size: 1.15rem; margin: 2rem 0 0.6rem; }
+  .doc h4, .doc h5, .doc h6 { font-size: 1rem; margin: 1.6rem 0 0.5rem; }
+  .doc h6 { color: var(--ink-soft); }
+
+  .doc p { margin: 0 0 1.15rem; }
+  .doc ul, .doc ol { margin: 0 0 1.15rem; padding-left: 1.35rem; }
+  .doc li { margin: 0.3rem 0; }
+  .doc li::marker { color: var(--ink-faint); }
+  .doc li > ul, .doc li > ol { margin: 0.3rem 0 0.35rem; }
+
+  .doc blockquote {
+    margin: 1.5rem 0;
+    padding: 0 0 0 1.35rem;
+    border-left: 2px solid var(--pencil);
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  .doc blockquote p:last-child { margin-bottom: 0; }
+
+  .doc hr {
+    height: 0;
+    margin: 2.75rem 0;
+    border: 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .doc code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--paper-edge);
+    padding: 0.12em 0.34em;
+    border-radius: 2px;
+  }
+  .doc pre {
+    margin: 1.5rem 0;
+    padding: 1rem 1.15rem;
+    overflow-x: auto;
+    background: var(--paper-edge);
+    border-left: 2px solid var(--rule);
+    border-radius: 2px;
+    line-height: 1.55;
+  }
+  .doc pre code {
+    background: none;
+    padding: 0;
+    font-size: 0.8125rem;
+  }
+
+  .doc img { max-width: 100%; height: auto; display: block; margin: 1.6rem 0; }
+
+  .doc table {
+    width: 100%;
+    margin: 1.6rem 0;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+  }
+  .doc th, .doc td {
+    padding: 0.5rem 0.7rem;
+    border-bottom: 1px solid var(--rule);
+    text-align: left;
+    vertical-align: top;
+  }
+  .doc th { font-weight: 600; border-bottom-width: 2px; }
+  .table-scroll { overflow-x: auto; }
+
+  .doc mark { background: var(--highlight); color: inherit; padding: 0 0.15em; }
+
+  .doc input[type="checkbox"] {
+    margin-right: 0.4rem;
+    accent-color: var(--pencil);
+  }
+  .doc li:has(> input[type="checkbox"]) { list-style: none; margin-left: -1.35rem; }
+
+  .doc a:hover { text-decoration-thickness: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  @media print {
+    :root { --paper: #fff; --ink: #000; --measure: 100%; }
+    .bar, .toc, .drape, .start { display: none !important; }
+    .reader { display: block !important; padding: 0; }
+    .doc { max-width: none; }
+    .doc pre, .doc code { background: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <span class="bar-name" id="docName"></span>
+  <span class="bar-meta" id="docMeta"></span>
+  <button type="button" class="linkish" id="swap">Open another file</button>
+</header>
+
+<section class="start">
+  <div class="start-inner">
+    <h1 class="start-head">Read markdown as a document</h1>
+    <p class="start-body">
+      Open a <code>.md</code> file from this computer and it appears here, set for reading
+      rather than editing. Nothing is uploaded — the file is opened in this browser tab and
+      never leaves it.
+    </p>
+    <button type="button" class="pick" id="pick">Choose a file</button>
+    <p class="hint" id="hint">or drop one anywhere on this page</p>
+  </div>
+</section>
+
+<div class="reader">
+  <nav class="toc" id="toc" aria-label="Contents"></nav>
+  <article class="doc" id="doc"></article>
+</div>
+
+<div class="drape" aria-hidden="true">Drop to read</div>
+
+<input type="file" id="file" accept=".md,.markdown,.mdown,.mkd,.mkdn,.mdwn,.txt,text/markdown,text/plain" hidden>
+
+<script src="vendor/marked.min.js"></script>
+<script src="vendor/purify.min.js"></script>
+<script>
+(function () {
+  var body    = document.body;
+  var fileIn  = document.getElementById('file');
+  var docEl   = document.getElementById('doc');
+  var tocEl   = document.getElementById('toc');
+  var nameEl  = document.getElementById('docName');
+  var metaEl  = document.getElementById('docMeta');
+  var hintEl  = document.getElementById('hint');
+  var spy     = null;
+
+  var HINT = hintEl.textContent;
+  var OK   = /\.(md|markdown|mdown|mkd|mkdn|mdwn|txt)$/i;
+
+  marked.setOptions({ gfm: true, breaks: false });
+
+  document.getElementById('pick').addEventListener('click', open);
+  document.getElementById('swap').addEventListener('click', open);
+  function open() { fileIn.click(); }
+
+  fileIn.addEventListener('change', function () {
+    if (fileIn.files && fileIn.files[0]) load(fileIn.files[0]);
+    fileIn.value = '';
+  });
+
+  /* --- drag and drop over the whole page --- */
+  var depth = 0;
+  window.addEventListener('dragenter', function (e) {
+    e.preventDefault();
+    depth++;
+    body.classList.add('dropping');
+  });
+  window.addEventListener('dragover', function (e) { e.preventDefault(); });
+  window.addEventListener('dragleave', function () {
+    depth = Math.max(0, depth - 1);
+    if (!depth) body.classList.remove('dropping');
+  });
+  window.addEventListener('drop', function (e) {
+    e.preventDefault();
+    depth = 0;
+    body.classList.remove('dropping');
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) load(f);
+  });
+
+  function say(msg) {
+    hintEl.textContent = msg || HINT;
+    hintEl.classList.toggle('is-error', !!msg);
+  }
+
+  function load(file) {
+    if (!OK.test(file.name)) {
+      say('That is not a markdown file. Choose one ending in .md, .markdown or .txt.');
+      return;
+    }
+    var reader = new FileReader();
+    reader.onerror = function () { say('That file could not be read. Try opening it again.'); };
+    reader.onload = function () { render(String(reader.result), file); };
+    reader.readAsText(file);
+  }
+
+  function render(text, file) {
+    say('');
+
+    var html = DOMPurify.sanitize(marked.parse(text), { ADD_ATTR: ['target'] });
+    docEl.innerHTML = html;
+
+    slugHeadings();
+    wrapTables();
+    externalise();
+
+    var words = (text.replace(/[#*_`>~\-\[\]()!]/g, ' ').match(/\S+/g) || []).length;
+    nameEl.textContent = file.name;
+    metaEl.textContent = words.toLocaleString() + (words === 1 ? ' word' : ' words');
+    document.title = file.name.replace(/\.[^.]+$/, '') + ' — Markdown viewer';
+
+    // the document must be on screen before the contents rail measures it
+    body.classList.add('has-doc');
+    window.scrollTo(0, 0);
+    buildToc();
+  }
+
+  function slugHeadings() {
+    var seen = Object.create(null);
+    docEl.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function (h) {
+      var base = (h.textContent || 'section').toLowerCase()
+        .replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-') || 'section';
+      seen[base] = (seen[base] || 0) + 1;
+      h.id = seen[base] > 1 ? base + '-' + seen[base] : base;
+    });
+  }
+
+  function wrapTables() {
+    docEl.querySelectorAll('table').forEach(function (t) {
+      if (t.parentElement.classList.contains('table-scroll')) return;
+      var box = document.createElement('div');
+      box.className = 'table-scroll';
+      t.parentNode.insertBefore(box, t);
+      box.appendChild(t);
+    });
+  }
+
+  function externalise() {
+    docEl.querySelectorAll('a[href]').forEach(function (a) {
+      if (!a.getAttribute('href').startsWith('#')) {
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+      }
+    });
+  }
+
+  function buildToc() {
+    if (spy) { window.removeEventListener('scroll', spy); spy = null; }
+    tocEl.innerHTML = '';
+
+    var heads = Array.prototype.slice.call(docEl.querySelectorAll('h2, h3'));
+    if (heads.length < 3) { body.classList.remove('has-toc'); return; }
+
+    var links = {};
+    heads.forEach(function (h) {
+      var a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.textContent = h.textContent;
+      if (h.tagName === 'H3') a.className = 'sub';
+      tocEl.appendChild(a);
+      links[h.id] = a;
+    });
+    body.classList.add('has-toc');
+
+    var queued = false;
+    var marked_id = null;
+    function mark() {
+      queued = false;
+      var current = heads[0];
+      for (var i = 0; i < heads.length; i++) {
+        if (heads[i].getBoundingClientRect().top <= 96) current = heads[i];
+        else break;
+      }
+      if (current.id === marked_id) return;
+      marked_id = current.id;
+
+      Object.keys(links).forEach(function (id) {
+        links[id].classList.toggle('current', id === marked_id);
+      });
+
+      // keep the marked entry inside the rail's own scroll
+      var a = links[marked_id];
+      var top = a.offsetTop;
+      var bottom = top + a.offsetHeight;
+      if (top < tocEl.scrollTop) tocEl.scrollTop = top - 8;
+      else if (bottom > tocEl.scrollTop + tocEl.clientHeight) {
+        tocEl.scrollTop = bottom - tocEl.clientHeight + 8;
+      }
+    }
+
+    spy = function () {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(mark);
+    };
+    window.addEventListener('scroll', spy, { passive: true });
+    mark();
+  }
+})();
+</script>
+</body>
+</html>
