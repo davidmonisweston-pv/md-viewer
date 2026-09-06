@@ -438,6 +438,14 @@
     reader.readAsText(file);
   }
 
+  // Entry point for opening a document without a file picker, used by the
+  // Windows file association in windows/open-md.ps1.
+  window.mdViewer = {
+    open: function (text, name) {
+      render(String(text), { name: name || 'document.md' });
+    }
+  };
+
   function render(text, file) {
     say('');
 

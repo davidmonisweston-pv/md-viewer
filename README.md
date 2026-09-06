@@ -19,6 +19,35 @@ Ctrl+P prints the document without the surrounding interface.
 
 Dark mode follows the operating system setting.
 
+## Opening .md files straight from Windows Explorer
+
+`windows/` sets md-viewer up as a program Windows can open Markdown files with, including
+files kept in WSL.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File "\\wsl.localhost\Ubuntu\home\<you>\projects\md-viewer\windows\register-file-association.ps1"
+```
+
+That writes a ProgID under `HKEY_CURRENT_USER` — no admin rights, nothing machine-wide.
+Windows does not allow a script to seize a file type, so make it the default yourself,
+once: right-click any `.md` file, **Open with → Choose another app**, pick **Markdown
+viewer**, tick **Always use this app**.
+
+`windows/unregister-file-association.ps1` removes all of it.
+
+### Why it needs a script
+
+A page loaded from `file://` cannot read another local file, so the viewer cannot simply be
+pointed at a path on the command line. `windows/open-md.ps1` instead reads the document,
+bakes it into a self-contained copy of the viewer in `%TEMP%\md-viewer`, and opens that in
+your default browser. Generated pages are reused per document and cleared after a week.
+
+The same script is a usable command on its own:
+
+```powershell
+powershell -File windows\open-md.ps1 notes.md
+```
+
 ## How it works
 
 `index.html` holds the whole viewer — markup, styles and script. It uses two vendored
@@ -30,3 +59,6 @@ libraries in `vendor/`, committed so the page works offline:
 
 Links in a document open in a new tab. Relative image paths will not resolve when the page
 is opened from `file://`.
+
+`window.mdViewer.open(text, filename)` renders a document without the file picker. That is
+the hook `open-md.ps1` uses, and it is the way to drive the viewer from anything else.
