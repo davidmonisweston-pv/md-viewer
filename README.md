@@ -1,14 +1,20 @@
 # md-viewer
 
-A single local HTML page that opens a Markdown file and renders it for reading in your
-browser. No server, no build step, no network — open `index.html` and choose a file.
+**[markdown.informededucation.com](https://markdown.informededucation.com)**
+
+A single HTML page that opens a Markdown file and renders it for reading. No server, no
+build step, no network — the file is read in your browser and never leaves it.
+
+Use it on the web at the link above, or open `site/index.html` from a copy of this
+repository. Both are the same file.
 
 ## Use it
 
-Open `index.html` in a browser, then either press **Choose a file** or drop a `.md` file
-anywhere on the page. The file is read in the browser tab; nothing is uploaded anywhere.
+Open the site, or `site/index.html` from a local copy, then either press **Choose a file**
+or drop a `.md` file anywhere on the page. The file is read in the browser tab; nothing is
+uploaded anywhere.
 
-`sample.md` is included so you can see what it looks like.
+`site/sample.md` is included so you can see what it looks like.
 
 ## What it renders
 
@@ -77,10 +83,21 @@ The same script is a usable command on its own:
 powershell -File windows\open-md.ps1 notes.md
 ```
 
+## Repository layout
+
+| Path | What it is |
+| --- | --- |
+| `site/` | Everything that is published. Nothing else is. |
+| `windows/` | Scripts that make `.md` files open in this viewer from Explorer |
+| `wrangler.jsonc` | Deploy config — Cloudflare serves `site/` from its edge |
+
+Pushing to `main` deploys the site. Only `site/` is published, so the repository can hold
+things the website should not serve.
+
 ## How it works
 
-`index.html` holds the whole viewer — markup, styles and script. It uses two vendored
-libraries in `vendor/`, committed so the page works offline:
+`site/index.html` holds the whole viewer — markup, styles and script. It uses two vendored
+libraries in `site/vendor/`, committed so the page works offline:
 
 - [marked](https://github.com/markedjs/marked) 12.0.2 — Markdown to HTML
 - [DOMPurify](https://github.com/cure53/DOMPurify) 3.1.6 — sanitises the result, since

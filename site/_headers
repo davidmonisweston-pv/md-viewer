@@ -1,0 +1,4 @@
+# The bundled libraries are pinned to a version and never change, so they can
+# be cached hard. Pages stay revalidated so an update is seen immediately.
+/vendor/*
+  Cache-Control: public, max-age=31536000, immutable
