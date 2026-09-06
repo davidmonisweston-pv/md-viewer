@@ -8,7 +8,7 @@
   // make wrangler authoritative over it and could drop configuration this
   // file does not know about.
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "markdown-viewer",
+  "name": "md-viewer",
   "compatibility_date": "2026-09-06",
   // The site is also reachable on a workers.dev address. Publishing every
   // deployment at a second public URL as well would mean the same pages
