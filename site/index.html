@@ -203,6 +203,36 @@
 
   /* ---------- drop ---------- */
 
+  .about {
+    max-width: 27rem;
+    margin: auto;
+    padding: 1.6rem 1.75rem 1.4rem;
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    font-family: var(--sans);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+  .about::backdrop { background: rgba(10, 12, 14, 0.42); }
+  .about h2 {
+    margin: 0 0 0.8rem;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  .about p { margin: 0 0 0.9rem; color: var(--ink-soft); }
+  .about a { color: var(--pencil); }
+  .about-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.35rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--rule);
+  }
+  .about-close { margin-top: 0.35rem; }
+
   .drape {
     position: fixed;
     inset: 0.6rem;
@@ -408,7 +438,7 @@
     html, body { background: #fff; }
     body { font-size: 11pt; line-height: 1.45; }
 
-    .bar, .toc, .drape, .start { display: none !important; }
+    .bar, .toc, .drape, .start, .about { display: none !important; }
     .reader { display: block !important; padding: 0; }
     .doc { max-width: none; width: auto; }
     .print-only { display: block; }
@@ -537,6 +567,7 @@
   <span class="bar-name" id="docName"></span>
   <span class="bar-meta" id="docMeta"></span>
   <span class="bar-alert" id="docAlert" role="status" hidden></span>
+  <button type="button" class="linkish" id="about">About</button>
   <button type="button" class="linkish" id="print">Save as PDF</button>
   <button type="button" class="linkish" id="swap">Open another file</button>
 </header>
@@ -558,6 +589,7 @@
       <p class="colophon-links">
         <a href="https://github.com/davidmonisweston-pv/md-viewer">Source on GitHub</a>
         <a href="privacy.html">Privacy</a>
+        <a href="https://github.com/davidmonisweston-pv/md-viewer#opening-md-files-straight-from-windows-explorer">Open .md files from Explorer</a>
       </p>
     </footer>
   </div>
@@ -575,6 +607,21 @@
   <nav class="toc" id="toc" aria-label="Contents"></nav>
   <article class="doc" id="doc"></article>
 </div>
+
+<dialog class="about" id="aboutPanel" aria-labelledby="aboutTitle">
+  <h2 id="aboutTitle">Markdown viewer</h2>
+  <p>Opens a Markdown file and sets it for reading. The file is read in this browser tab
+     and never leaves your computer: nothing is uploaded, and the page sets no cookies and
+     loads nothing from anywhere else.</p>
+  <p>By <a href="https://github.com/davidmonisweston-pv" target="_blank" rel="noopener noreferrer">David
+     Monis-Weston</a>. MIT licensed, free to use and to copy.</p>
+  <p class="about-links">
+    <a href="https://github.com/davidmonisweston-pv/md-viewer" target="_blank" rel="noopener noreferrer">Source on GitHub</a>
+    <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy</a>
+    <a href="https://github.com/davidmonisweston-pv/md-viewer#opening-md-files-straight-from-windows-explorer" target="_blank" rel="noopener noreferrer">Open .md files from Explorer</a>
+  </p>
+  <button type="button" class="linkish about-close" id="aboutClose">Close</button>
+</dialog>
 
 <div class="drape" aria-hidden="true">Drop to read</div>
 
@@ -608,6 +655,19 @@
   function open() { fileIn.click(); }
 
   document.getElementById('print').addEventListener('click', function () { window.print(); });
+
+  // A dialog rather than a page: the open document lives only in this tab, so
+  // navigating away to read the colophon would throw it away.
+  var aboutPanel = document.getElementById('aboutPanel');
+  document.getElementById('about').addEventListener('click', function () {
+    aboutPanel.showModal();
+  });
+  document.getElementById('aboutClose').addEventListener('click', function () {
+    aboutPanel.close();
+  });
+  aboutPanel.addEventListener('click', function (e) {
+    if (e.target === aboutPanel) aboutPanel.close();   // click outside the panel
+  });
 
   fileIn.addEventListener('change', function () {
     if (fileIn.files && fileIn.files[0]) load(fileIn.files[0]);
