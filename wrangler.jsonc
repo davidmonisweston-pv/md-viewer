@@ -10,9 +10,11 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "md-viewer",
   "compatibility_date": "2026-09-06",
-  // The site is also reachable on a workers.dev address. Publishing every
-  // deployment at a second public URL as well would mean the same pages
-  // served from several addresses, so previews stay off.
+  // markdown.informededucation.com is the only address this site answers on.
+  // Both of these default to enabled, which would serve identical pages at
+  // md-viewer.davidaweston.workers.dev and at a per-deployment preview URL —
+  // duplicate content, and addresses people could bookmark by mistake.
+  "workers_dev": false,
   "preview_urls": false,
   "assets": {
     "directory": "./site"
