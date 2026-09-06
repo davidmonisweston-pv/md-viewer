@@ -21,8 +21,14 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $repo   = Split-Path -Parent $PSScriptRoot
+
+# Two layouts: the installed copy is flat, the repository keeps the web files
+# in site/ so that only those are ever published.
 $viewer = Join-Path $repo 'index.html'
-$vendor = Join-Path $repo 'vendor'
+if (-not (Test-Path -LiteralPath $viewer)) {
+    $viewer = Join-Path $repo 'site\index.html'
+}
+$vendor = Join-Path (Split-Path -Parent $viewer) 'vendor'
 
 # Explorer runs this with -WindowStyle Hidden, so an unhandled error would
 # terminate PowerShell with nothing on screen and no clue why nothing opened.

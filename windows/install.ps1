@@ -32,19 +32,28 @@ foreach ($dir in @($Destination, (Join-Path $Destination 'vendor'), (Join-Path $
     New-Item -ItemType Directory -Force -Path $dir | Out-Null
 }
 
-Copy-Item -LiteralPath (Join-Path $repo 'index.html') -Destination $Destination -Force
+# Web files live in site/ in the repository; the installed copy is flat.
+$web = Join-Path $repo 'site'
+if (-not (Test-Path -LiteralPath $web)) { $web = $repo }
+
+foreach ($page in @('index.html', 'privacy.html')) {
+    $from = Join-Path $web $page
+    if (Test-Path -LiteralPath $from) {
+        Copy-Item -LiteralPath $from -Destination $Destination -Force
+    }
+}
 # -LiteralPath throughout: a checkout in a folder like "md-viewer [main]"
 # would otherwise be read as a wildcard pattern and quietly match nothing.
-foreach ($pair in @(@{ From = 'vendor';  Filter = '*.js'  },
-                    @{ From = 'windows'; Filter = '*.ps1' })) {
-    $src = Join-Path $repo $pair.From
+foreach ($pair in @(@{ Root = $web;   From = 'vendor';  Filter = '*.js'  },
+                    @{ Root = $repo;  From = 'windows'; Filter = '*.ps1' })) {
+    $src = Join-Path $pair.Root $pair.From
     foreach ($item in Get-ChildItem -LiteralPath $src -Filter $pair.Filter -File) {
         Copy-Item -LiteralPath $item.FullName `
                   -Destination (Join-Path $Destination "$($pair.From)\$($item.Name)") -Force
     }
 }
 
-$sample = Join-Path $repo 'sample.md'
+$sample = Join-Path $web 'sample.md'
 if (Test-Path -LiteralPath $sample) {
     Copy-Item -LiteralPath $sample -Destination $Destination -Force
 }

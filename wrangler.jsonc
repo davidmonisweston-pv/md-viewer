@@ -1,0 +1,20 @@
+{
+  // Static-assets-only Worker: no `main` script, so Cloudflare serves the
+  // files in ./site directly from its edge. Requests never invoke a Worker
+  // and are not billed — there is no origin for a visitor's request to reach.
+  //
+  // The custom domain (markdown.informededucation.com) is managed in the
+  // dashboard and deliberately not declared here: adding a `routes` key would
+  // make wrangler authoritative over it and could drop configuration this
+  // file does not know about.
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "markdown-viewer",
+  "compatibility_date": "2026-09-06",
+  // The site is also reachable on a workers.dev address. Publishing every
+  // deployment at a second public URL as well would mean the same pages
+  // served from several addresses, so previews stay off.
+  "preview_urls": false,
+  "assets": {
+    "directory": "./site"
+  }
+}
