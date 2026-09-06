@@ -9,15 +9,16 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext x='16' y='23' font-family='ui-monospace,monospace' font-size='24' text-anchor='middle' fill='%233a6ea5'%3E%23%3C/text%3E%3C/svg%3E">
 <style>
   :root {
-    --paper:      #f6f6f2;
-    --paper-edge: #eeeee8;
-    --ink:        #1a201c;
-    --ink-soft:   #5a665e;
-    --ink-faint:  #646d66;
+    --paper:      #ffffff;
+    --paper-edge: #f3f4f5;
+    --ink:        #16181a;
+    --ink-soft:   #55595c;
+    --ink-faint:  #6b7073;
     --pencil:     #2e5943;
-    --highlight:  #f0e7a6;
-    --rule:       #dedcd2;
+    --highlight:  #fbf1a8;
+    --rule:       #e4e6e7;
 
+    --sans: "Avenir Next", Avenir, Corbel, "Segoe UI", system-ui, sans-serif;
     --serif: "Iowan Old Style", Charter, "Bitstream Charter", Constantia, "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
     --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
 
@@ -27,14 +28,14 @@
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --paper:      #14181d;
-      --paper-edge: #1b2027;
-      --ink:        #e0e4e0;
-      --ink-soft:   #9aa79e;
-      --ink-faint:  #7d8880;
+      --paper:      #131517;
+      --paper-edge: #1b1e20;
+      --ink:        #e3e5e6;
+      --ink-soft:   #9aa0a3;
+      --ink-faint:  #80868a;
       --pencil:     #74b795;
-      --highlight:  #4a4526;
-      --rule:       #2b323a;
+      --highlight:  #45421f;
+      --rule:       #292d30;
     }
   }
 
@@ -46,9 +47,9 @@
     margin: 0;
     background: var(--paper);
     color: var(--ink);
-    font-family: var(--serif);
-    font-size: 1.125rem;
-    line-height: 1.7;
+    font-family: var(--sans);
+    font-size: 1.0625rem;
+    line-height: 1.65;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
   }
@@ -76,8 +77,8 @@
     background: color-mix(in srgb, var(--paper) 97%, transparent);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--rule);
-    font-family: var(--serif);
-    font-size: 0.875rem;
+    font-family: var(--sans);
+    font-size: 0.8125rem;
     letter-spacing: 0.005em;
   }
   body.has-doc .bar { display: flex; }
@@ -132,7 +133,7 @@
   .start-head {
     position: relative;
     margin: 0 0 1.25rem;
-    font-family: var(--serif);
+    font-family: var(--sans);
     font-size: clamp(2rem, 6vw, 2.9rem);
     font-weight: 400;
     line-height: 1.12;
@@ -168,7 +169,7 @@
     color: var(--paper);
     border: 0;
     border-radius: 2px;
-    font-family: var(--serif);
+    font-family: var(--sans);
     font-size: 0.9375rem;
     font-weight: 550;
     letter-spacing: 0.005em;
@@ -179,8 +180,8 @@
 
   .hint {
     margin: 0.9rem 0 0;
-    font-family: var(--serif);
-    font-size: 0.875rem;
+    font-family: var(--sans);
+    font-size: 0.8125rem;
     color: var(--ink-faint);
   }
   .hint.is-error { color: var(--pencil); }
@@ -189,8 +190,8 @@
     margin-top: 4.5rem;
     padding-top: 1.1rem;
     border-top: 1px solid var(--rule);
-    font-family: var(--serif);
-    font-size: 0.875rem;
+    font-family: var(--sans);
+    font-size: 0.8125rem;
     line-height: 1.6;
     color: var(--ink-faint);
   }
@@ -211,7 +212,7 @@
     border: 2px dashed var(--pencil);
     border-radius: 3px;
     background: color-mix(in srgb, var(--highlight) 62%, var(--paper));
-    font-family: var(--serif);
+    font-family: var(--sans);
     font-size: 1rem;
     font-weight: 550;
     color: var(--ink);
@@ -242,8 +243,8 @@
     width: 13rem;
     max-height: calc(100svh - 8rem);
     overflow-y: auto;
-    font-family: var(--serif);
-    font-size: 0.875rem;
+    font-family: var(--sans);
+    font-size: 0.8125rem;
     line-height: 1.45;
     border-left: 1px solid var(--rule);
   }
@@ -267,6 +268,9 @@
 
   .doc {
     grid-column: 2;
+    font-family: var(--serif);
+    font-size: 1.125rem;
+    line-height: 1.7;
     width: 100%;
     min-width: 0;
   }
@@ -333,7 +337,7 @@
   .doc pre code {
     background: none;
     padding: 0;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
   }
 
   .doc img { max-width: 100%; height: auto; display: block; margin: 1.6rem 0; }
@@ -362,8 +366,8 @@
     padding: 0.5rem 0.8rem;
     border: 1px dashed var(--rule);
     border-radius: 2px;
-    font-family: var(--serif);
-    font-size: 0.875rem;
+    font-family: var(--sans);
+    font-size: 0.8125rem;
     color: var(--ink-soft);
     text-decoration: none;
   }
@@ -441,7 +445,7 @@
     }
     .print-meta {
       margin: 0;
-      font-family: var(--serif);
+      font-family: var(--sans);
       font-size: 9.5pt;
       line-height: 1.7;
       color: var(--ink-soft);
@@ -459,7 +463,7 @@
     .print-contents.print-empty { display: none; }
     .print-contents h2 {
       margin: 0 0 8mm;
-      font-family: var(--serif);
+      font-family: var(--sans);
       font-size: 13pt;
       font-weight: 600;
       letter-spacing: 0;
@@ -468,7 +472,7 @@
     .print-contents li {
       position: relative;
       margin: 0 0 2.6mm;
-      font-family: var(--serif);
+      font-family: var(--sans);
       font-size: 10pt;
       line-height: 1.35;
       max-width: 34em;
