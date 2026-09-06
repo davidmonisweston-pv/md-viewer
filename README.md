@@ -25,15 +25,26 @@ Dark mode follows the operating system setting.
 files kept in WSL.
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File "\\wsl.localhost\Ubuntu\home\<you>\projects\md-viewer\windows\register-file-association.ps1"
+powershell -ExecutionPolicy Bypass -File "\\wsl.localhost\Ubuntu\home\<you>\projects\md-viewer\windows\install.ps1"
 ```
 
-That writes a ProgID under `HKEY_CURRENT_USER` — no admin rights, nothing machine-wide.
+That copies the viewer to `%LOCALAPPDATA%\md-viewer` and registers a ProgID under
+`HKEY_CURRENT_USER` — no admin rights, nothing machine-wide. The Windows copy means
+opening a document does not have to wait for WSL to start or read the viewer back across
+the WSL filesystem.
+
 Windows does not allow a script to seize a file type, so make it the default yourself,
 once: right-click any `.md` file, **Open with → Choose another app**, pick **Markdown
 viewer**, tick **Always use this app**.
 
-`windows/unregister-file-association.ps1` removes all of it.
+Re-run `install.ps1` after changing the viewer to update the installed copy. Your default
+survives it — Windows binds that choice to the ProgID, not to the path behind it.
+
+To remove everything: run `unregister-file-association.ps1` from the installed copy, then
+delete `%LOCALAPPDATA%\md-viewer`.
+
+`register-file-association.ps1` on its own points the association at whichever folder it
+sits in, if you would rather run straight from the repository.
 
 ### Why it needs a script
 

@@ -61,7 +61,16 @@ $html = $template.Replace('</body>', $inject + "`n</body>")
 $outDir = Join-Path $env:TEMP 'md-viewer'
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $outDir 'vendor') | Out-Null
-Copy-Item -Path (Join-Path $vendor '*.js') -Destination (Join-Path $outDir 'vendor') -Force
+# Only copy the libraries when they are missing or have changed; when the
+# viewer lives in WSL this saves reading them back over the WSL filesystem on
+# every single open.
+foreach ($lib in Get-ChildItem -Path (Join-Path $vendor '*.js') -File) {
+    $dest = Join-Path $outDir "vendor\$($lib.Name)"
+    $have = Get-Item -LiteralPath $dest -ErrorAction SilentlyContinue
+    if (-not $have -or $have.Length -ne $lib.Length -or $have.LastWriteTime -lt $lib.LastWriteTime) {
+        Copy-Item -LiteralPath $lib.FullName -Destination $dest -Force
+    }
+}
 
 # Reopening the same document reuses its page rather than piling up files.
 $md5  = [System.Security.Cryptography.MD5]::Create()
