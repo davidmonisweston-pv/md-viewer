@@ -15,9 +15,27 @@ anywhere on the page. The file is read in the browser tab; nothing is uploaded a
 Standard Markdown plus the GitHub extensions that show up in notes and reports: tables,
 task lists, strikethrough and fenced code. Documents with three or more subheadings get a
 contents rail that marks the section you are reading. Wide tables scroll on their own.
-Ctrl+P prints the document without the surrounding interface.
 
 Dark mode follows the operating system setting.
+
+## Saving a PDF
+
+**Save as PDF** in the top bar, or Ctrl+P, prints the document as a report rather than a
+screenshot of a web page:
+
+- A title page carrying the document's own first heading, the filename, the word count and
+  the date.
+- A contents page for documents with three or more subheadings. Each entry hangs its
+  markdown heading level in the margin, so the structure is legible at a glance.
+- Headings are never stranded at the foot of a page, paragraphs keep three lines either
+  side of a break, and table headers repeat when a table runs on.
+- Code blocks wrap instead of being clipped at the page edge, and wide tables print in
+  full rather than scrolling.
+- A4 with 18-20mm margins. Page numbers come from the browser's own print header and
+  footer settings, which CSS cannot control.
+
+The title appears on the cover and is then suppressed in the body, so it does not print
+twice.
 
 ## Opening .md files straight from Windows Explorer
 

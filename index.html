@@ -360,12 +360,148 @@
     * { transition: none !important; animation: none !important; }
   }
 
+  /* Only ever visible on paper. */
+  .print-only { display: none; }
+
+  @page {
+    size: A4;
+    margin: 20mm 18mm 22mm;
+  }
+
   @media print {
-    :root { --paper: #fff; --ink: #000; --measure: 100%; }
+    :root {
+      --paper: #fff;
+      --paper-edge: #fff;
+      --ink: #000;
+      --ink-soft: #333;
+      --ink-faint: #555;
+      --rule: #bbb;
+      --measure: 100%;
+    }
+
+    html, body { background: #fff; }
+    body { font-size: 11pt; line-height: 1.45; }
+
     .bar, .toc, .drape, .start { display: none !important; }
     .reader { display: block !important; padding: 0; }
-    .doc { max-width: none; }
-    .doc pre, .doc code { background: none; }
+    .doc { max-width: none; width: auto; }
+    .print-only { display: block; }
+
+    /* --- cover --------------------------------------------------------
+       The title sits low on the page rather than centred, and carries the
+       same hanging markdown mark the start screen uses. No rule beneath it:
+       a rule there would decorate rather than tell the reader anything. */
+    .print-cover {
+      break-after: page;
+      page-break-after: always;
+      padding-top: 148mm;
+      padding-left: 11mm;
+    }
+    .print-title {
+      position: relative;
+      margin: 0 0 9mm;
+      font-family: var(--serif);
+      font-size: 25pt;
+      font-weight: 400;
+      line-height: 1.14;
+      letter-spacing: -0.015em;
+      max-width: 22em;
+    }
+    .print-title::before {
+      content: "#";
+      position: absolute;
+      left: -11mm;
+      top: 0.28em;
+      font-family: var(--mono);
+      font-size: 11pt;
+      font-weight: 400;
+      color: var(--pencil);
+    }
+    .print-meta {
+      margin: 0;
+      font-family: var(--sans);
+      font-size: 9.5pt;
+      line-height: 1.7;
+      color: var(--ink-soft);
+      white-space: pre-line;
+    }
+
+    /* --- contents ------------------------------------------------------
+       Each entry hangs its own markdown heading level in the margin, so the
+       marker carries the document's structure instead of just indenting. */
+    .print-contents {
+      break-after: page;
+      page-break-after: always;
+      padding-left: 11mm;
+    }
+    .print-contents.print-empty { display: none; }
+    .print-contents h2 {
+      margin: 0 0 8mm;
+      font-family: var(--serif);
+      font-size: 13pt;
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+    .print-contents ol { margin: 0; padding: 0; list-style: none; }
+    .print-contents li {
+      position: relative;
+      margin: 0 0 2.6mm;
+      font-family: var(--sans);
+      font-size: 10pt;
+      line-height: 1.35;
+      max-width: 34em;
+    }
+    .print-contents li::before {
+      position: absolute;
+      top: 0.1em;
+      font-family: var(--mono);
+      font-size: 8pt;
+      color: var(--pencil);
+    }
+    .print-contents li[data-level="2"]::before { content: "##";  left: -11mm; }
+    .print-contents li[data-level="3"]::before { content: "###"; left: -11mm; }
+    .print-contents li[data-level="3"] {
+      margin-left: 9mm;
+      font-size: 9.5pt;
+      color: var(--ink-soft);
+    }
+
+    /* the cover already carries the title, so don't repeat it on page 3 */
+    .doc h1[data-cover-title] { display: none; }
+
+    /* --- keeping things whole ---------------------------------------- */
+    .doc p, .doc li { orphans: 3; widows: 3; }
+
+    .doc h1, .doc h2, .doc h3, .doc h4, .doc h5, .doc h6 {
+      break-after: avoid;
+      page-break-after: avoid;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .doc h2 { margin-top: 10mm; }
+    .doc h3 { margin-top: 7mm; }
+
+    .doc blockquote, .doc pre, .doc tr, .doc img, .doc .blocked {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .doc thead { display: table-header-group; }
+    .doc table { break-inside: auto; page-break-inside: auto; }
+
+    /* --- things that clip or scroll on screen must open out on paper -- */
+    .table-scroll { overflow: visible !important; }
+    .doc pre {
+      overflow: visible;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      border-left: 1px solid var(--rule);
+      background: none;
+    }
+    .doc code { background: none; }
+    .doc pre code { font-size: 9pt; }
+
+    .doc a { color: inherit; text-decoration: underline; }
+    .doc img { max-width: 100%; }
   }
 </style>
 </head>
@@ -375,6 +511,7 @@
   <span class="bar-name" id="docName"></span>
   <span class="bar-meta" id="docMeta"></span>
   <span class="bar-alert" id="docAlert" role="status" hidden></span>
+  <button type="button" class="linkish" id="print">Save as PDF</button>
   <button type="button" class="linkish" id="swap">Open another file</button>
 </header>
 
@@ -392,6 +529,14 @@
 </section>
 
 <div class="reader">
+  <section class="print-only print-cover" id="printCover">
+    <h1 class="print-title" id="printTitle"></h1>
+    <p class="print-meta" id="printMeta"></p>
+  </section>
+  <nav class="print-only print-contents" id="printContents">
+    <h2>Contents</h2>
+    <ol id="printContentsList"></ol>
+  </nav>
   <nav class="toc" id="toc" aria-label="Contents"></nav>
   <article class="doc" id="doc"></article>
 </div>
@@ -412,6 +557,10 @@
   var metaEl  = document.getElementById('docMeta');
   var hintEl  = document.getElementById('hint');
   var alertEl = document.getElementById('docAlert');
+  var coverT  = document.getElementById('printTitle');
+  var coverM  = document.getElementById('printMeta');
+  var pcNav   = document.getElementById('printContents');
+  var pcList  = document.getElementById('printContentsList');
   var spy     = null;
 
   var HINT = hintEl.textContent;
@@ -422,6 +571,8 @@
   document.getElementById('pick').addEventListener('click', open);
   document.getElementById('swap').addEventListener('click', open);
   function open() { fileIn.click(); }
+
+  document.getElementById('print').addEventListener('click', function () { window.print(); });
 
   fileIn.addEventListener('change', function () {
     if (fileIn.files && fileIn.files[0]) load(fileIn.files[0]);
@@ -524,6 +675,8 @@
     metaEl.textContent = words.toLocaleString() + (words === 1 ? ' word' : ' words');
     document.title = file.name.replace(/\.[^.]+$/, '') + ' — Markdown viewer';
 
+    buildCover(file, words);
+
     // the document must be on screen before the contents rail measures it
     body.classList.add('has-doc');
     window.scrollTo(0, 0);
@@ -606,11 +759,51 @@
     });
   }
 
+  // The printed cover. The document's own opening h1 becomes the title and is
+  // then suppressed on paper, so it does not appear twice.
+  function buildCover(file, words) {
+    docEl.querySelectorAll('h1[data-cover-title]').forEach(function (h) {
+      h.removeAttribute('data-cover-title');
+    });
+
+    // The document's first h1 is its title, wherever it sits — plenty of
+    // documents open with a standfirst or a status line above it.
+    var h1 = docEl.querySelector('h1');
+    var title;
+    if (h1 && h1.textContent.trim()) {
+      title = h1.textContent.trim();
+      h1.setAttribute('data-cover-title', '');
+    } else {
+      title = file.name.replace(/\.[^.]+$/, '');
+    }
+
+    coverT.textContent = title;
+    coverM.textContent = file.name + '\n' +
+      words.toLocaleString() + (words === 1 ? ' word' : ' words') + '\n' +
+      'Printed ' + new Date().toLocaleDateString('en-GB', {
+        day: 'numeric', month: 'long', year: 'numeric'
+      });
+  }
+
+  function buildPrintContents(heads) {
+    pcList.innerHTML = '';
+    if (!heads.length) { pcNav.classList.add('print-empty'); return; }
+    pcNav.classList.remove('print-empty');
+
+    heads.forEach(function (h) {
+      var li = document.createElement('li');
+      li.setAttribute('data-level', h.tagName === 'H3' ? '3' : '2');
+      li.textContent = h.textContent;
+      pcList.appendChild(li);
+    });
+  }
+
   function buildToc() {
     if (spy) { window.removeEventListener('scroll', spy); spy = null; }
     tocEl.innerHTML = '';
 
     var heads = Array.prototype.slice.call(docEl.querySelectorAll('h2, h3'));
+    buildPrintContents(heads.length >= 3 ? heads : []);
     if (heads.length < 3) { body.classList.remove('has-toc'); return; }
 
     var links = {};
