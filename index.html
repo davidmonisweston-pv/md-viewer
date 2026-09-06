@@ -10,7 +10,7 @@
     --paper-edge: #eeeee8;
     --ink:        #16202a;
     --ink-soft:   #5b6773;
-    --ink-faint:  #8b94a0;
+    --ink-faint:  #67707c;
     --pencil:     #3a6ea5;
     --highlight:  #f0e7a6;
     --rule:       #dedcd2;
@@ -29,7 +29,7 @@
       --paper-edge: #1b2027;
       --ink:        #dfe3e6;
       --ink-soft:   #98a3ad;
-      --ink-faint:  #6d7883;
+      --ink-faint:  #7b8691;
       --pencil:     #7fb2df;
       --highlight:  #4a4526;
       --rule:       #2b323a;
@@ -87,6 +87,16 @@
     white-space: nowrap;
   }
   .bar-meta { color: var(--ink-faint); flex: 1; white-space: nowrap; }
+
+  .bar-alert {
+    flex: 0 1 auto;
+    min-width: 0;
+    color: var(--pencil);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .bar-alert[hidden] { display: none; }
 
   .linkish {
     appearance: none;
@@ -324,6 +334,20 @@
 
   .doc mark { background: var(--highlight); color: inherit; padding: 0 0.15em; }
 
+  /* stands in for an image the document wanted to fetch from the internet */
+  .doc .blocked {
+    display: inline-block;
+    margin: 1.6rem 0;
+    padding: 0.5rem 0.8rem;
+    border: 1px dashed var(--rule);
+    border-radius: 2px;
+    font-family: var(--sans);
+    font-size: 0.8125rem;
+    color: var(--ink-soft);
+    text-decoration: none;
+  }
+  .doc .blocked:hover { border-color: var(--pencil); color: var(--pencil); }
+
   .doc input[type="checkbox"] {
     margin-right: 0.4rem;
     accent-color: var(--pencil);
@@ -350,6 +374,7 @@
 <header class="bar">
   <span class="bar-name" id="docName"></span>
   <span class="bar-meta" id="docMeta"></span>
+  <span class="bar-alert" id="docAlert" role="status" hidden></span>
   <button type="button" class="linkish" id="swap">Open another file</button>
 </header>
 
@@ -386,6 +411,7 @@
   var nameEl  = document.getElementById('docName');
   var metaEl  = document.getElementById('docMeta');
   var hintEl  = document.getElementById('hint');
+  var alertEl = document.getElementById('docAlert');
   var spy     = null;
 
   var HINT = hintEl.textContent;
@@ -422,35 +448,72 @@
     if (f) load(f);
   });
 
+  // The start screen is hidden once a document is open, so problems reported
+  // while reading have to surface in the top bar instead.
   function say(msg) {
     hintEl.textContent = msg || HINT;
     hintEl.classList.toggle('is-error', !!msg);
+    alertEl.textContent = msg || '';
+    alertEl.hidden = !msg;
+    if (msg) { clearTimeout(alertEl._timer); alertEl._timer = setTimeout(clearSay, 6000); }
   }
+  function clearSay() { say(''); }
+
+  // Guards against an earlier, slower read landing after a later one and
+  // replacing the document the reader actually asked for.
+  var generation = 0;
 
   function load(file) {
     if (!OK.test(file.name)) {
       say('That is not a markdown file. Choose one ending in .md, .markdown or .txt.');
       return;
     }
+    var mine   = ++generation;
     var reader = new FileReader();
-    reader.onerror = function () { say('That file could not be read. Try opening it again.'); };
-    reader.onload = function () { render(String(reader.result), file); };
+    reader.onerror = function () {
+      if (mine !== generation) return;
+      say('That file could not be read. Try opening it again.');
+    };
+    reader.onload = function () {
+      if (mine !== generation) return;
+      render(String(reader.result), file);
+    };
     reader.readAsText(file);
   }
 
   // Entry point for opening a document without a file picker, used by the
   // Windows file association in windows/open-md.ps1.
+  // baseUri is the directory the document came from, as a file:// URI, so
+  // relative links in it can be resolved. Optional: the file picker and
+  // drag-and-drop cannot know it, and pass nothing.
   window.mdViewer = {
-    open: function (text, name) {
-      render(String(text), { name: name || 'document.md' });
+    open: function (text, name, baseUri) {
+      generation++;
+      render(String(text), { name: name || 'document.md' }, baseUri);
     }
   };
 
-  function render(text, file) {
+  function render(text, file, baseUri) {
     say('');
 
-    var html = DOMPurify.sanitize(marked.parse(text), { ADD_ATTR: ['target'] });
-    docEl.innerHTML = html;
+    // Sanitise into a detached fragment, not into the page. Anything with a
+    // src starts loading the instant it lands in the live DOM, so remote URLs
+    // have to be dealt with while the nodes are still inert.
+    //
+    // Document CSS is dropped rather than sanitised: a <style> block or a
+    // style attribute in the source applies to this whole page, and can hide
+    // or cover the viewer's own interface.
+    var frag = DOMPurify.sanitize(marked.parse(text), {
+      FORBID_TAGS: ['style'],
+      FORBID_ATTR: ['style'],
+      RETURN_DOM_FRAGMENT: true
+    });
+
+    resolveRelative(frag, baseUri);
+    blockRemoteResources(frag);
+
+    docEl.innerHTML = '';
+    docEl.appendChild(document.importNode(frag, true));
 
     slugHeadings();
     wrapTables();
@@ -468,12 +531,59 @@
   }
 
   function slugHeadings() {
-    var seen = Object.create(null);
+    // Candidates are checked against every id already on the page, so a
+    // heading cannot collide with another heading, with a suffixed slug that
+    // happens to match a later heading, or with the viewer's own elements.
+    var taken = Object.create(null);
+    document.querySelectorAll('[id]').forEach(function (el) { taken[el.id] = true; });
+
     docEl.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function (h) {
-      var base = (h.textContent || 'section').toLowerCase()
-        .replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-') || 'section';
-      seen[base] = (seen[base] || 0) + 1;
-      h.id = seen[base] > 1 ? base + '-' + seen[base] : base;
+      // An id the document author wrote is kept, and left to win over ours.
+      if (h.id && taken[h.id] === undefined) { taken[h.id] = true; return; }
+
+      var base = (h.textContent || '').toLowerCase()
+        .replace(/['\u2019]/g, '')
+        .replace(/[^\p{L}\p{N}]+/gu, '-')
+        .replace(/^-+|-+$/g, '');
+      if (!base) base = 'section';
+
+      var id = base, n = 1;
+      while (taken[id]) { n++; id = base + '-' + n; }
+      taken[id] = true;
+      h.id = id;
+    });
+  }
+
+  // Relative links and images in a document point at things next to that
+  // document, not next to the viewer. The Windows opener passes the source
+  // folder so they can be pointed back at the right place.
+  function resolveRelative(root, baseUri) {
+    if (!baseUri) return;
+    root.querySelectorAll('a[href], img[src]').forEach(function (el) {
+      var attr = el.tagName === 'IMG' ? 'src' : 'href';
+      var val  = el.getAttribute(attr);
+      if (!val || val.charAt(0) === '#') return;
+      if (/^[a-z][a-z0-9+.-]*:/i.test(val) || val.slice(0, 2) === '//') return;
+      try { el.setAttribute(attr, new URL(val, baseUri).href); } catch (e) { /* leave it */ }
+    });
+  }
+
+  // A remote image in a document would tell its host that you opened the
+  // document, and when. Nothing here reaches the network unless you ask it to.
+  function blockRemoteResources(root) {
+    var doc = root.ownerDocument || document;
+    root.querySelectorAll('img[src], video[src], audio[src], source[src]').forEach(function (el) {
+      var src = el.getAttribute('src') || '';
+      if (!/^https?:/i.test(src)) return;
+
+      var note = doc.createElement('a');
+      note.className = 'blocked';
+      note.href = src;
+      note.target = '_blank';
+      note.rel = 'noopener noreferrer';
+      note.textContent = (el.getAttribute('alt') || 'Remote image') + ' — not loaded';
+      note.title = 'Opens ' + src + ' in a new tab';
+      el.parentNode.replaceChild(note, el);
     });
   }
 

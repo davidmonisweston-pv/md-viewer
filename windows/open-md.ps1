@@ -24,16 +24,27 @@ $repo   = Split-Path -Parent $PSScriptRoot
 $viewer = Join-Path $repo 'index.html'
 $vendor = Join-Path $repo 'vendor'
 
+# Explorer runs this with -WindowStyle Hidden, so an unhandled error would
+# terminate PowerShell with nothing on screen and no clue why nothing opened.
+function Show-Problem([string] $message) {
+    if ($NoLaunch) { Write-Error $message; return }
+    try {
+        Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
+        [System.Windows.Forms.MessageBox]::Show(
+            $message, 'md-viewer', 'OK', 'Warning') | Out-Null
+    } catch {
+        Write-Error $message
+    }
+}
+
+try {
+
 if (-not (Test-Path -LiteralPath $viewer)) {
-    [void][System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms')
-    [System.Windows.Forms.MessageBox]::Show(
-        "The viewer is missing:`n$viewer", 'md-viewer') | Out-Null
+    Show-Problem "The viewer is missing:`n$viewer`n`nRe-run windows\install.ps1 from the repository."
     exit 1
 }
 if (-not (Test-Path -LiteralPath $Path)) {
-    [void][System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms')
-    [System.Windows.Forms.MessageBox]::Show(
-        "File not found:`n$Path", 'md-viewer') | Out-Null
+    Show-Problem "File not found:`n$Path"
     exit 1
 }
 
@@ -51,8 +62,14 @@ function ConvertTo-JsString([string] $value) {
     ($value | ConvertTo-Json -Compress) -replace '<', '\u003c'
 }
 
+# The document's folder, so relative links and images inside it still resolve
+# once the page itself is living in the temp folder.
+$baseUri = ([System.Uri]([System.IO.Path]::GetDirectoryName($full) +
+                         [System.IO.Path]::DirectorySeparatorChar)).AbsoluteUri
+
 $inject = '<script>window.addEventListener("load",function(){window.mdViewer.open(' +
-          (ConvertTo-JsString $markdown) + ',' + (ConvertTo-JsString $name) + ');});</script>'
+          (ConvertTo-JsString $markdown) + ',' + (ConvertTo-JsString $name) + ',' +
+          (ConvertTo-JsString $baseUri) + ');});</script>'
 
 $html = $template.Replace('</body>', $inject + "`n</body>")
 
@@ -64,7 +81,7 @@ New-Item -ItemType Directory -Force -Path (Join-Path $outDir 'vendor') | Out-Nul
 # Only copy the libraries when they are missing or have changed; when the
 # viewer lives in WSL this saves reading them back over the WSL filesystem on
 # every single open.
-foreach ($lib in Get-ChildItem -Path (Join-Path $vendor '*.js') -File) {
+foreach ($lib in Get-ChildItem -LiteralPath $vendor -Filter '*.js' -File) {
     $dest = Join-Path $outDir "vendor\$($lib.Name)"
     $have = Get-Item -LiteralPath $dest -ErrorAction SilentlyContinue
     if (-not $have -or $have.Length -ne $lib.Length -or $have.LastWriteTime -lt $lib.LastWriteTime) {
@@ -73,11 +90,18 @@ foreach ($lib in Get-ChildItem -Path (Join-Path $vendor '*.js') -File) {
 }
 
 # Reopening the same document reuses its page rather than piling up files.
+# The path is hashed exactly as given: WSL paths are case-sensitive, so
+# .../A/notes.md and .../a/notes.md are different documents.
 $md5  = [System.Security.Cryptography.MD5]::Create()
 $hash = [System.BitConverter]::ToString(
-            $md5.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($full.ToLower()))
+            $md5.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($full))
         ).Replace('-', '').Substring(0, 10)
+
+# The readable part is trimmed so a long but perfectly legal filename cannot
+# push the generated name past what Windows accepts.
 $safe = [System.IO.Path]::GetFileNameWithoutExtension($name) -replace '[^\w\-]', '-'
+if ($safe.Length -gt 60) { $safe = $safe.Substring(0, 60) }
+if (-not $safe)          { $safe = 'document' }
 $out  = Join-Path $outDir "$safe-$hash.html"
 
 [System.IO.File]::WriteAllText($out, $html, (New-Object System.Text.UTF8Encoding($false)))
@@ -89,3 +113,9 @@ Get-ChildItem -Path $outDir -Filter '*.html' -File -ErrorAction SilentlyContinue
 
 if ($NoLaunch) { Write-Output $out }
 else           { Start-Process $out }
+
+}
+catch {
+    Show-Problem ("Could not open`n$Path`n`n" + $_.Exception.Message)
+    exit 1
+}

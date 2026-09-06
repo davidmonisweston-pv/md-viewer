@@ -68,8 +68,20 @@ libraries in `vendor/`, committed so the page works offline:
 - [DOMPurify](https://github.com/cure53/DOMPurify) 3.1.6 — sanitises the result, since
   Markdown can contain raw HTML
 
-Links in a document open in a new tab. Relative image paths will not resolve when the page
-is opened from `file://`.
+## What it will not do
 
-`window.mdViewer.open(text, filename)` renders a document without the file picker. That is
+- **Load anything from the internet.** A remote image in a document would tell its host
+  that you opened that document, and when. Those are replaced by a placeholder you can
+  click if you want it. Links you click are your choice and open normally.
+- **Apply CSS from a document.** A `<style>` block or `style` attribute in the source
+  applies to the whole page, so a document could hide or cover the viewer's own interface.
+  Both are dropped.
+
+Relative links and images resolve against the document's own folder when it is opened
+through the Windows association, which passes that folder to the viewer. The file picker
+and drag-and-drop cannot know it — the browser does not tell the page where a chosen file
+came from — so relative paths stay unresolved there.
+
+`window.mdViewer.open(text, filename, baseUri)` renders a document without the file picker.
+The optional `baseUri` is the folder the document came from. That is
 the hook `open-md.ps1` uses, and it is the way to drive the viewer from anything else.
